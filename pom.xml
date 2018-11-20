@@ -42,7 +42,19 @@
 		<!-- redis依赖 -->
 		<dependency> 
 			<groupId>org.springframework.boot</groupId> 
-			<artifactId>spring-boot-starter-data-redis</artifactId> 
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+			<exclusions>
+				<!-- 不依赖于redis异步客户端lettuce -->
+				<exclusion>
+					<groupId>io.lettuce</groupId>
+					<artifactId>lettuce-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- 引入redis客户端驱动jedis -->
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
 		</dependency>
 	</dependencies>
 

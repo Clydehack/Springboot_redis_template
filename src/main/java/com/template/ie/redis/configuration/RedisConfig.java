@@ -1,43 +1,56 @@
 package com.template.ie.redis.configuration;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 @EnableCaching
 public class RedisConfig {
 
-	/* 缓存管理器 */
-	@Bean
-	public CacheManager cacheManager(RedisTemplate<?,?> redisTemplate) {
-		CacheManager cacheManager = new RedisCacheManager(redisTemplate);
-		return cacheManager;
+	/************************** 使用方法 - 第一种 **************************/
+	/* 通过一个连接池的配置创建了RedisConnectionFactory,很早的方法了 */
+	private RedisConnectionFactory connectionFactory = null;
+	
+	@Bean(name = "RedisConnectionFactory")
+	public RedisConnectionFactory initRedisConnectionFactory() {
+		if(this.connectionFactory != null) {
+			return this.connectionFactory;
+		}
+		JedisPoolConfig poolConfig = new JedisPoolConfig();
+		poolConfig.setMaxIdle(30);			// 最大空闲数
+		poolConfig.setMaxTotal(50); 		// 最大连接数
+		poolConfig.setMaxWaitMillis(2000); 	// 最大等待毫秒数
+		// 创建Jedis连接工厂
+		JedisConnectionFactory connectionFactory = new JedisConnectionFactory(poolConfig);
+		RedisStandaloneConfiguration rsCfg = connectionFactory.getStandaloneConfiguration();
+		connectionFactory.setHostName("192.168.11.131");
+		connectionFactory.setPort(6379);
+		connectionFactory.setPassword("123456");
+		this.connectionFactory = connectionFactory;
+		return connectionFactory;
 	}
-
-	/* 应该是类似于mongodbTemplate一样的 */
-	@Bean
-	public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory factory) {
-		RedisTemplate<String, String> template = new RedisTemplate<>();
-		template.setConnectionFactory(factory);
-		return template;
+	/************************** 使用方法 - 第一种 **************************/
+	
+	
+	/************************** 使用方法 - 第二种 **************************/
+	/* redisTemplate,应该是类似于mongodbTemplate一样的,使用最多的类 */
+	@Bean(name = "redisTemplate")
+	public RedisTemplate<Object, Object> initRedisTemplate(){
+		RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<Object, Object>();
+		//redisTemplate.setConnectionFactory(initConnectionFactory());
+		return redisTemplate;
 	}
-
-	/* 默认string的序列化方式，用于存储string格式，只支持KV为String的操作，具体待测试 */
-	@Bean
-	public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory factory) {
-		StringRedisTemplate stringRedisTemplate = new StringRedisTemplate();
-		stringRedisTemplate.setConnectionFactory(factory);
-		return stringRedisTemplate;
-	}
+	/************************** 使用方法 - 第二种 **************************/
+	
+	
+	/************************** 使用方法 - 第三种 **************************/
+	/* 缓存注解 */
+	/************************** 使用方法 - 第三种 **************************/
 }
